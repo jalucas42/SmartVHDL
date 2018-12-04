@@ -22,10 +22,11 @@ class VhdlAlign(sublime_plugin.TextCommand):
 
     def run(self,edit, cmd=""):
         if len(self.view.sel())==0 : return
+        upper_case_keywords = self.view.settings().get('upper_case_keywords', False)
         tab_size = int(self.view.settings().get('tab_size', 4))
         use_space = self.view.settings().get('translate_tabs_to_spaces')
         self.indent_space = ' '*tab_size
-        self.cfg = {'tab_size': tab_size, 'use_space':use_space}
+        self.cfg = {'tab_size': tab_size, 'use_space':use_space, 'upper_case_keywords': upper_case_keywords}
         # Save information of selected text
         region = self.view.sel()[0]
         row,col = self.view.rowcol(region.a)
@@ -226,7 +227,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
             #print('Length ports: N={} D={} T={} R={} => {}'.format(name_len,dir_len,type_len,range_len,comment_pos))
 
             # Add params with alignement and copy non params line as is
-            txt_new += '{}port (\n'.format('\t'*(ilvl+1))
+            txt_new += '{}PORT (\n'.format('\t'*(ilvl+1))
             for l in m.group('port').strip().splitlines() :
                 mp = re.match(re_ports,l)
                 if mp :
@@ -428,3 +429,11 @@ class VhdlAlign(sublime_plugin.TextCommand):
 
         #print(txt_new)
         return txt_new[:-1]
+
+    def case(self,keyword):
+        return keyword.upper()
+        #if self.cfg{'upper_case_keywords'}:
+        #    return keyword.upper()
+        #else:
+        #    return keyword.lower()
+

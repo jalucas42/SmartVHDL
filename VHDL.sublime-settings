@@ -19,5 +19,6 @@
 	"vhdl.autoconnect_port_prefix" : [],    // List of prefix to remove from the port before looking for a signal connection
 	"vhdl.autoconnect_port_suffix" : [] ,   // List of suffix to remove from the port before looking for a signal connection
 	// Navigation config
-	"vhdl.hierarchy_new_window" : false  // True to open a new window to display the module hierarchy
+	"vhdl.hierarchy_new_window" : false,  // True to open a new window to display the module hierarchy
+	"vhdl.upper_case_keywords" : true,
 }
