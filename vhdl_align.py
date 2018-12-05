@@ -120,7 +120,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
     def alignEntity(self,txt,ilvl):
         # TODO: Extract comment location to be sure to handle all case of strange comment location
         m = re.search(r"""(?six)
-            (?P<type>entity|component)\s+(?P<name>\w+)\s+is\s+
+            (?P<type>entity|component)\s+(?P<name>\w+)\s+(?:is)?\s+
             (generic\s*\((?P<generic>.*?)\)\s*;\s*)?
             (port\s*\((?P<port>.*?)\)\s*;)\s*
             (?P<ending>end\b(\s+(?P=type))?(\s+(?P=name))?)\s*;
@@ -156,8 +156,8 @@ class VhdlAlign(sublime_plugin.TextCommand):
             if has_range:
                 range_len +=1
 
-            name_len  = max(name_len , 30)
-            type_len  = max(type_len , 20)
+            name_len  = max(name_len , 28)
+            type_len  = max(type_len , 16)
             range_len = max(range_len, 0)
             init_len  = max(init_len , 0)
             
@@ -228,8 +228,8 @@ class VhdlAlign(sublime_plugin.TextCommand):
             if has_range:
                 range_len +=1
 
-            name_len  = max(name_len , 30)
-            type_len  = max(type_len , 20)
+            name_len  = max(name_len , 28)
+            type_len  = max(type_len , 16)
             range_len = max(range_len, 0)
             init_len  = max(init_len , 0)
 
@@ -296,14 +296,14 @@ class VhdlAlign(sublime_plugin.TextCommand):
             pos_end = s_tmp[::-1].index(')')
             sep_content = gen_content[len(gen_content)-pos_end:].strip()
             gen_content = gen_content[:-pos_end-1].strip()
-            txt_new += '\t'*(ilvl+1) + 'generic map (\n'
+            txt_new += '\t'*(ilvl+1) + 'GENERIC MAP (\n'
             txt_new += self.alignInstanceBinding(gen_content,ilvl+2)
             txt_new += '\t'*(ilvl+1) + ')\n'
             if sep_content:
                 txt_new += '\t'*(ilvl+1) + sep_content + '\n'
             port_content = m_content.group('port_content')
         # Align port map
-        txt_new += '\t'*(ilvl+1) + 'port map (\n'
+        txt_new += '\t'*(ilvl+1) + 'PORT MAP (\n'
         txt_new += self.alignInstanceBinding(port_content,ilvl+2)
         txt_new += '\t'*(ilvl+1) + ');'
         return txt_new
@@ -311,7 +311,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
     def alignInstanceBinding(self,txt,ilvl):
         # ensure one bind per line
         txt = re.sub(r',[ \t]*(\w+)',r',\n\1',txt.strip())
-        re_bind = r'^\s*(?P<port>\w+(?:\s*\(./?\))?)\s*=>(?P<bind>.*?)(?P<sep>,?)(?P<comment>[ \t]*--.*)?$'
+        re_bind = r'^\s*(?P<port>\w+(?:\s*\(./?\))?)\s*=>(?P<bind>.*?)(?P<sep>,?)\s*(?P<comment>[ \t]*--.*)?$'
         bind = re.findall(re_bind,txt,flags=re.MULTILINE)
         ports = [len(x[0].strip()) for x in bind]
         port_len = 0 if not ports else max(ports)
@@ -398,7 +398,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
             (?P<init>[\ \t]*\:=[\ \t]*(?P<init_val>[^;]+?))?
             [\ \t]*;[\ \t]*(?:--(?P<comment>[^\n]*))?$'''
         decl = re.findall(re_decl, txt ,flags=re.MULTILINE)
-        # print(decl)
+        #print(decl)
         qual_len_l  = [] if not decl else [len(x[0].strip()) for x in decl]
         name_len_l  = [] if not decl else [len(x[1].strip()) for x in decl]
         type_len_l  = [] if not decl else [len(x[2].strip()) for x in decl]
@@ -417,14 +417,9 @@ class VhdlAlign(sublime_plugin.TextCommand):
         type_len  = max(type_len, 16)
         range_len = max(range_len, 0)
         init_len  = max(init_len, 0)
-
-
-
-
-
         
-        # print('Len: qual = {}, name = {}, type = {}, range = {}, init = {} ({})'.format(qual_len,name_len,type_len,range_len,init_len,init_len))
-        #
+        #print('Len: qual = {}, name = {}, type = {}, range = {}, init = {} ({})'.format(qual_len,name_len,type_len,range_len,init_len,init_len))
+        
         txt_new = ''
         for l in txt.strip().splitlines() :
             mp = re.match(re_decl,l)
