@@ -138,7 +138,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
                 (?P<name>\w+)[\ \t]*:[\ \t]*
                 (?P<type>\w+)\b[\ \t]*
                 (?P<range>\([^\)]*\)|range[\ \t]+[\w\-\+]+[\ \t]+(?:(?:down)?to)[\ \t]+[\w\-\+]+)?
-                (?:[\ \t]*:=[\ \t]*(?P<init>.*?))
+                (?:[\ \t]*:=[\ \t]*(?P<init>.*?))?
                 [\ \t]*(?P<end>;)?[\ \t]*(?:--[\ \t]*(?P<comment>[^\n]*))?$'''
             decl = re.findall(re_params, params ,flags=re.MULTILINE)
             name_len_l  = [] if not decl else [len(x[0].strip()) for x in decl]
@@ -156,12 +156,17 @@ class VhdlAlign(sublime_plugin.TextCommand):
             if has_range:
                 range_len +=1
 
+            name_len  = max(name_len , 30)
+            type_len  = max(type_len , 20)
+            range_len = max(range_len, 0)
+            init_len  = max(init_len , 0)
+            
             #print(decl)
             #print('Length params: N={} T={} R={} I={}'.format(name_len,type_len,range_len,init_len))
             comment_pos = name_len + 1 + type_len + range_len + init_len
 
             # Add params with alignement and copy non params line as is
-            txt_new += '{}generic (\n'.format('\t'*(ilvl+1))
+            txt_new += '{}GENERIC (\n'.format('\t'*(ilvl+1))
             for l in m.group('generic').strip().splitlines() :
                 mp = re.match(re_params,l)
                 if mp :
@@ -223,6 +228,11 @@ class VhdlAlign(sublime_plugin.TextCommand):
             if has_range:
                 range_len +=1
 
+            name_len  = max(name_len , 30)
+            type_len  = max(type_len , 20)
+            range_len = max(range_len, 0)
+            init_len  = max(init_len , 0)
+
             comment_pos = name_len + type_len + range_len + init_len + dir_len+6
             #print('Length ports: N={} D={} T={} R={} => {}'.format(name_len,dir_len,type_len,range_len,comment_pos))
 
@@ -276,7 +286,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
         txt_new += '{} : {}\n'.format(m.group('inst_name').strip(),m.group('type').strip())
         port_content = m.group('content')
         # Extract generic map part if it exist and provide alignment
-        if m.group('gen_or_port')=='generic' :
+        if m.group('gen_or_port').lower()=='generic' :
             m_content = re.match(r'(?si)(?P<gen_content>.*)\bport\s+map\s*\((?P<port_content>.*)',port_content)
             if not m_content:
                 return ''
@@ -307,6 +317,10 @@ class VhdlAlign(sublime_plugin.TextCommand):
         port_len = 0 if not ports else max(ports)
         binds = [len(x[1].strip()) for x in bind]
         bind_len = 0 if not binds else max(binds)
+        
+        port_len = max(port_len, 28)
+        bind_len = max(bind_len, 28)
+        
         # print('[alignInstanceBinding] : Max length port = {} , bind = {}'.format(max(port_len),max(bind_len)))
         txt_new = ''
         for l in txt.splitlines() :
@@ -397,7 +411,18 @@ class VhdlAlign(sublime_plugin.TextCommand):
         init_len  = 0 if not init_len_l   else max(init_len_l )
         if init_len>0:
             init_len += 4
-        # print(decl)
+
+        qual_len  = max(qual_len, 0) 
+        name_len  = max(name_len, 28)
+        type_len  = max(type_len, 16)
+        range_len = max(range_len, 0)
+        init_len  = max(init_len, 0)
+
+
+
+
+
+        
         # print('Len: qual = {}, name = {}, type = {}, range = {}, init = {} ({})'.format(qual_len,name_len,type_len,range_len,init_len,init_len))
         #
         txt_new = ''
