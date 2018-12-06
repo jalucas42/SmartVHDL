@@ -22,11 +22,28 @@ class VhdlAlign(sublime_plugin.TextCommand):
 
     def run(self,edit, cmd=""):
         if len(self.view.sel())==0 : return
-        upper_case_keywords = self.view.settings().get('upper_case_keywords', False)
+        upper_case_keywords = self.view.settings().get('vhdl.upper_case_keywords', False)
         tab_size = int(self.view.settings().get('tab_size', 4))
         use_space = self.view.settings().get('translate_tabs_to_spaces')
         self.indent_space = ' '*tab_size
-        self.cfg = {'tab_size': tab_size, 'use_space':use_space, 'upper_case_keywords': upper_case_keywords}
+        self.cfg = {
+            'tab_size'                      : tab_size, 
+            'use_space'                     : use_space, 
+            "upper_case_keywords"           : self.view.settings().get("vhdl.upper_case_keywords"       , False),
+            "upper_case_ieee"               : self.view.settings().get("vhdl.upper_case_ieee"           , False),
+            "upper_case_attributes"         : self.view.settings().get("vhdl.upper_case_attributes"     , False),
+            "align_decl.min_qual_len"       : self.view.settings().get("vhdl.align_decl.min_qual_len"   , 0),
+            "align_decl.min_name_len"       : self.view.settings().get("vhdl.align_decl.min_name_len"   , 0),
+            "align_decl.min_type_len"       : self.view.settings().get("vhdl.align_decl.min_type_len"   , 0),
+            "align_decl.min_range_len"      : self.view.settings().get("vhdl.align_decl.min_range_len"  , 0),
+            "align_decl.min_init_len"       : self.view.settings().get("vhdl.align_decl.min_init_len"   , 0),
+            "align_inst.min_port_len"       : self.view.settings().get("vhdl.align_inst.min_port_len"   , 0),
+            "align_inst.min_bind_len"       : self.view.settings().get("vhdl.align_inst.min_bind_len"   , 0),
+            "align_entity.min_name_len"     : self.view.settings().get("vhdl.align_entity.min_name_len" , 0),
+            "align_entity.min_type_len"     : self.view.settings().get("vhdl.align_entity.min_type_len" , 0),
+            "align_entity.min_range_len"    : self.view.settings().get("vhdl.align_entity.min_range_len", 0),
+            "align_entity.min_init_len"     : self.view.settings().get("vhdl.align_entity.min_init_len" , 0),
+        }
         # Save information of selected text
         region = self.view.sel()[0]
         row,col = self.view.rowcol(region.a)
@@ -99,6 +116,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
 
         #
         if txt:
+            txt = self.setKeywordCase(txt)
             self.view.replace(edit,region,txt)
             sublime_util.move_cursor(self.view,self.view.text_point(row,col))
         else :
@@ -156,17 +174,17 @@ class VhdlAlign(sublime_plugin.TextCommand):
             if has_range:
                 range_len +=1
 
-            name_len  = max(name_len , 28)
-            type_len  = max(type_len , 16)
-            range_len = max(range_len, 0)
-            init_len  = max(init_len , 0)
+            name_len  = max(name_len , self.cfg["align_entity.min_name_len" ])
+            type_len  = max(type_len , self.cfg["align_entity.min_type_len" ])
+            range_len = max(range_len, self.cfg["align_entity.min_range_len"])
+            init_len  = max(init_len , self.cfg["align_entity.min_init_len" ])
             
             #print(decl)
             #print('Length params: N={} T={} R={} I={}'.format(name_len,type_len,range_len,init_len))
             comment_pos = name_len + 1 + type_len + range_len + init_len
 
             # Add params with alignement and copy non params line as is
-            txt_new += '{}GENERIC (\n'.format('\t'*(ilvl+1))
+            txt_new += '{}generic (\n'.format('\t'*(ilvl+1))
             for l in m.group('generic').strip().splitlines() :
                 mp = re.match(re_params,l)
                 if mp :
@@ -228,16 +246,16 @@ class VhdlAlign(sublime_plugin.TextCommand):
             if has_range:
                 range_len +=1
 
-            name_len  = max(name_len , 28)
-            type_len  = max(type_len , 16)
-            range_len = max(range_len, 0)
-            init_len  = max(init_len , 0)
+            name_len  = max(name_len , self.cfg["align_entity.min_name_len" ])
+            type_len  = max(type_len , self.cfg["align_entity.min_type_len" ])
+            range_len = max(range_len, self.cfg["align_entity.min_range_len"])
+            init_len  = max(init_len , self.cfg["align_entity.min_init_len" ])
 
             comment_pos = name_len + type_len + range_len + init_len + dir_len+6
             #print('Length ports: N={} D={} T={} R={} => {}'.format(name_len,dir_len,type_len,range_len,comment_pos))
 
             # Add params with alignement and copy non params line as is
-            txt_new += '{}PORT (\n'.format('\t'*(ilvl+1))
+            txt_new += '{}port (\n'.format('\t'*(ilvl+1))
             for l in m.group('port').strip().splitlines() :
                 mp = re.match(re_ports,l)
                 if mp :
@@ -296,14 +314,14 @@ class VhdlAlign(sublime_plugin.TextCommand):
             pos_end = s_tmp[::-1].index(')')
             sep_content = gen_content[len(gen_content)-pos_end:].strip()
             gen_content = gen_content[:-pos_end-1].strip()
-            txt_new += '\t'*(ilvl+1) + 'GENERIC MAP (\n'
+            txt_new += '\t'*(ilvl+1) + 'generic map (\n'
             txt_new += self.alignInstanceBinding(gen_content,ilvl+2)
             txt_new += '\t'*(ilvl+1) + ')\n'
             if sep_content:
                 txt_new += '\t'*(ilvl+1) + sep_content + '\n'
             port_content = m_content.group('port_content')
         # Align port map
-        txt_new += '\t'*(ilvl+1) + 'PORT MAP (\n'
+        txt_new += '\t'*(ilvl+1) + 'port map (\n'
         txt_new += self.alignInstanceBinding(port_content,ilvl+2)
         txt_new += '\t'*(ilvl+1) + ');'
         return txt_new
@@ -318,8 +336,8 @@ class VhdlAlign(sublime_plugin.TextCommand):
         binds = [len(x[1].strip()) for x in bind]
         bind_len = 0 if not binds else max(binds)
         
-        port_len = max(port_len, 28)
-        bind_len = max(bind_len, 28)
+        port_len = max(port_len, self.cfg["align_inst.min_port_len"])
+        bind_len = max(bind_len, self.cfg["align_inst.min_bind_len"])
         
         # print('[alignInstanceBinding] : Max length port = {} , bind = {}'.format(max(port_len),max(bind_len)))
         txt_new = ''
@@ -412,11 +430,11 @@ class VhdlAlign(sublime_plugin.TextCommand):
         if init_len>0:
             init_len += 4
 
-        qual_len  = max(qual_len, 0) 
-        name_len  = max(name_len, 28)
-        type_len  = max(type_len, 16)
-        range_len = max(range_len, 0)
-        init_len  = max(init_len, 0)
+        qual_len  = max(qual_len,   self.cfg["align_decl.min_qual_len"]  ) 
+        name_len  = max(name_len,   self.cfg["align_decl.min_name_len"]  )
+        type_len  = max(type_len,   self.cfg["align_decl.min_type_len"]  )
+        range_len = max(range_len,  self.cfg["align_decl.min_range_len"]  )
+        init_len  = max(init_len,   self.cfg["align_decl.min_init_len"]  )
         
         #print('Len: qual = {}, name = {}, type = {}, range = {}, init = {} ({})'.format(qual_len,name_len,type_len,range_len,init_len,init_len))
         
@@ -450,10 +468,76 @@ class VhdlAlign(sublime_plugin.TextCommand):
         #print(txt_new)
         return txt_new[:-1]
 
-    def case(self,keyword):
-        return keyword.upper()
-        #if self.cfg{'upper_case_keywords'}:
-        #    return keyword.upper()
-        #else:
-        #    return keyword.lower()
 
+    def setKeywordCase(self, txt):
+        re_decl = r'''(?six)
+                ^
+                (?P<non_comment>.*?)
+                (?P<comment>--.*)?
+                $
+            '''
+
+        # VHDL keywords
+        re_keyword = r'''
+                (?six)
+                (?<=[^a-z0-9_'])
+                (?P<keyword>
+                    signal|port|generic|map|downto|to|range|in|out|entity|architecture
+                )
+                (?=[^a-z0-9_])
+            '''
+            
+        # IEEE standard types/functions
+        re_ieee = r'''
+                (?six)
+                (?<=[^a-z0-9_'])
+                (?P<keyword>
+                    std_logic|std_logic_vector|bit|bit_vector|unsigned|signed|shift_left|resize
+                )
+                (?=[^a-z0-9_])
+            '''
+
+        # VHDL attributes
+        re_attribute = r'''
+                (?six)
+                (?P<keyword>
+                    'length|'range|'high|'low
+                )
+                (?=[^a-z0-9_])
+            '''
+            
+        txt_new = ''
+        for l in txt.splitlines() :
+            mp = re.match(re_decl,l)
+            if mp :
+                
+                tmp = mp.group('non_comment')
+                
+                if self.cfg['upper_case_keywords']:
+                    tmp = re.sub(re_keyword, lambda match: r'{}'.format(match.group('keyword').upper()), tmp)
+                else:
+                    tmp = re.sub(re_keyword, lambda match: r'{}'.format(match.group('keyword').lower()), tmp)
+                    
+                if self.cfg['upper_case_ieee']:
+                    tmp = re.sub(re_ieee, lambda match: r'{}'.format(match.group('keyword').upper()), tmp)
+                else:
+                    tmp = re.sub(re_ieee, lambda match: r'{}'.format(match.group('keyword').lower()), tmp)
+                    
+                if self.cfg['upper_case_attributes']:
+                    tmp = re.sub(re_attribute, lambda match: r'{}'.format(match.group('keyword').upper()), tmp)
+                else:
+                    tmp = re.sub(re_attribute, lambda match: r'{}'.format(match.group('keyword').lower()), tmp)
+
+                txt_new += tmp
+                    
+                if mp.group('comment'):
+                    txt_new += mp.group('comment')
+                    
+                    
+            else:
+                txt_new += l
+                
+            txt_new += '\n'
+        
+        return txt_new[:-1]
+            
