@@ -22,7 +22,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
 
     def run(self,edit, cmd=""):
         if len(self.view.sel())==0 : return
-        upper_case_keywords = self.view.settings().get('upper_case_keywords', False)
+        upper_case_keywords = self.view.settings().get('vhdl.upper_case_keywords', False)
         tab_size = int(self.view.settings().get('tab_size', 4))
         use_space = self.view.settings().get('translate_tabs_to_spaces')
         self.indent_space = ' '*tab_size
@@ -99,6 +99,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
 
         #
         if txt:
+            txt = self.setKeywordCase(txt)
             self.view.replace(edit,region,txt)
             sublime_util.move_cursor(self.view,self.view.text_point(row,col))
         else :
@@ -166,7 +167,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
             comment_pos = name_len + 1 + type_len + range_len + init_len
 
             # Add params with alignement and copy non params line as is
-            txt_new += '{}GENERIC (\n'.format('\t'*(ilvl+1))
+            txt_new += '{}generic (\n'.format('\t'*(ilvl+1))
             for l in m.group('generic').strip().splitlines() :
                 mp = re.match(re_params,l)
                 if mp :
@@ -237,7 +238,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
             #print('Length ports: N={} D={} T={} R={} => {}'.format(name_len,dir_len,type_len,range_len,comment_pos))
 
             # Add params with alignement and copy non params line as is
-            txt_new += '{}PORT (\n'.format('\t'*(ilvl+1))
+            txt_new += '{}port (\n'.format('\t'*(ilvl+1))
             for l in m.group('port').strip().splitlines() :
                 mp = re.match(re_ports,l)
                 if mp :
@@ -296,14 +297,14 @@ class VhdlAlign(sublime_plugin.TextCommand):
             pos_end = s_tmp[::-1].index(')')
             sep_content = gen_content[len(gen_content)-pos_end:].strip()
             gen_content = gen_content[:-pos_end-1].strip()
-            txt_new += '\t'*(ilvl+1) + 'GENERIC MAP (\n'
+            txt_new += '\t'*(ilvl+1) + 'generic map (\n'
             txt_new += self.alignInstanceBinding(gen_content,ilvl+2)
             txt_new += '\t'*(ilvl+1) + ')\n'
             if sep_content:
                 txt_new += '\t'*(ilvl+1) + sep_content + '\n'
             port_content = m_content.group('port_content')
         # Align port map
-        txt_new += '\t'*(ilvl+1) + 'PORT MAP (\n'
+        txt_new += '\t'*(ilvl+1) + 'port map (\n'
         txt_new += self.alignInstanceBinding(port_content,ilvl+2)
         txt_new += '\t'*(ilvl+1) + ');'
         return txt_new
@@ -450,10 +451,43 @@ class VhdlAlign(sublime_plugin.TextCommand):
         #print(txt_new)
         return txt_new[:-1]
 
-    def case(self,keyword):
-        return keyword.upper()
-        #if self.cfg{'upper_case_keywords'}:
-        #    return keyword.upper()
-        #else:
-        #    return keyword.lower()
 
+    def setKeywordCase(self, txt):
+        re_decl = r'''(?six)
+                ^
+                (?P<non_comment>.*?)
+                (?P<comment>--.*)?
+                $
+            '''
+
+        # TODO: Add the following categories, possibly with separate settings flags:
+        #    - Actual VHDL keywords (entity, architecture, etc)
+        #    - IEEE standard types/functions (std_logic, unsigned, shift_right, etc)
+        #    - VHDL attributes ('length, 'range, etc)
+        re_keyword = r'''
+                (?six)
+                (?<=[^a-z0-9_])
+                (?P<keyword>
+                    signal|std_logic|std_logic_vector|port|generic|map|downto|to|in|out|inout|entity
+                )
+                (?=[^a-z0-9_])
+            '''
+            
+        txt_new = ''
+        for l in txt.splitlines() :
+            mp = re.match(re_decl,l)
+            if mp :
+                if self.cfg['upper_case_keywords']:
+                    txt_new += re.sub(re_keyword, lambda match: r'{}'.format(match.group('keyword').upper()), mp.group('non_comment'))
+                else:
+                    txt_new += re.sub(re_keyword, lambda match: r'{}'.format(match.group('keyword').lower()), mp.group('non_comment'))
+                    
+                if mp.group('comment'):
+                    txt_new += mp.group('comment')
+            else:
+                txt_new += l
+                
+            txt_new += '\n'
+        
+        return txt_new[:-1]
+            
