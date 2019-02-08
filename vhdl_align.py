@@ -120,7 +120,10 @@ class VhdlAlign(sublime_plugin.TextCommand):
             self.view.replace(edit,region,txt)
             sublime_util.move_cursor(self.view,self.view.text_point(row,col))
         else :
-            sublime.status_message('No alignement support for this block of code.')
+            sublime.status_message('No alignment support for this block of code.')
+            # We can still capitalize keywords even if we can't align it!
+            region = self.view.line(region)
+            self.view.replace(edit, region, self.setKeywordCase(self.view.substr(region)))
 
 
     def getIndentLevel(self,txt):
@@ -409,12 +412,15 @@ class VhdlAlign(sublime_plugin.TextCommand):
         return txt_new
 
     def alignDecl(self,txt,ilvl):
-        re_decl = r'''(?six)^[\ \t]*
+        re_decl = r'''
+        	(?six)^[\ \t]*
             (?P<qual>\w+)[\ \t]*(?P<name>'''+self.s_id_list+r''')[\ \t]*:[\ \t]*
             (?P<type>\w+)[\ \t]*
-            (?P<range>\([^\)]*\)|range[\ \t]+[\w\-\+]+[\ \t]+(?:(?:down)?to)[\ \t]+[\w\-\+]+)?
+            (?P<range>\(.+?\))?
             (?P<init>[\ \t]*\:=[\ \t]*(?P<init_val>[^;]+?))?
-            [\ \t]*;[\ \t]*(?:--(?P<comment>[^\n]*))?$'''
+            [\ \t]*;[\ \t]*(?:--(?P<comment>[^\n]*))?$    	
+        '''
+
         decl = re.findall(re_decl, txt ,flags=re.MULTILINE)
         #print(decl)
         qual_len_l  = [] if not decl else [len(x[0].strip()) for x in decl]
@@ -482,7 +488,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
                 (?six)
                 (?<=[^a-z0-9_'])
                 (?P<keyword>
-                    signal|port|generic|map|downto|to|range|in|out|entity|architecture
+                    signal|port|generic|map|downto|to|range|in|out|entity|architecture|type|subtype|is|array|of
                 )
                 (?=[^a-z0-9_])
             '''
@@ -492,7 +498,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
                 (?six)
                 (?<=[^a-z0-9_'])
                 (?P<keyword>
-                    std_logic|std_logic_vector|bit|bit_vector|unsigned|signed|shift_left|resize
+                    std_logic|std_logic_vector|bit|bit_vector|unsigned|signed|natural|shift_left|resize
                 )
                 (?=[^a-z0-9_])
             '''
