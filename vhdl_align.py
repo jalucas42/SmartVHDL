@@ -158,7 +158,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
             re_params = r'''(?six)^[\ \t]*
                 (?P<name>\w+)[\ \t]*:[\ \t]*
                 (?P<type>\w+)\b[\ \t]*
-                (?P<range>\([^\)]*\)|range[\ \t]+[\w\-\+]+[\ \t]+(?:(?:down)?to)[\ \t]+[\w\-\+]+)?
+                (?P<range>\(.+?\))?
                 (?:[\ \t]*:=[\ \t]*(?P<init>.*?))?
                 [\ \t]*(?P<end>;)?[\ \t]*(?:--[\ \t]*(?P<comment>[^\n]*))?$'''
             decl = re.findall(re_params, params ,flags=re.MULTILINE)
@@ -227,7 +227,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
                 (?P<name>'''+self.s_id_list+r''')[\ \t]*:[\ \t]*
                 (?P<dir>in|out|inout)[\ \t]+
                 (?P<type>\w+)[\ \t]*
-                (?P<range>\([^\)]*\)|range[\ \t]+[\w\-\+]+[\ \t]+(?:(?:down)?to)[\ \t]+[\w\-\+]+)?
+                (?P<range>\(.+?\))?
                 (?P<init>[\ \t]*\:=[\ \t]*(?P<init_val>[^;]+?))?
                 [\ \t]*(?P<end>;)?[\ \t]*(?:--(?P<comment>[^\n]*?))?$'''
             decl = re.findall(re_ports, ports ,flags=re.MULTILINE)
