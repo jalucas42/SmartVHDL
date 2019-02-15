@@ -1,5 +1,5 @@
 import sublime, sublime_plugin
-import re, string, os, imp, sys
+import re, string, os, imp, sys, pprint
 
 try:
     from .util import vhdl_util
@@ -16,7 +16,7 @@ def plugin_loaded():
 ############################################################################
 
 class VhdlAlign(sublime_plugin.TextCommand):
-
+    pp        = pprint.PrettyPrinter(indent=4)
     s_id_list = r'\w+(?:\s*,[\s\w,]+)?'
     s_comment = r'^(?P<space>[\ \t]*)--[\ \t]*(?P<comment>.*?)(\n|$)'
 
@@ -43,6 +43,17 @@ class VhdlAlign(sublime_plugin.TextCommand):
             "align_entity.min_type_len"     : self.view.settings().get("vhdl.align_entity.min_type_len" , 0),
             "align_entity.min_range_len"    : self.view.settings().get("vhdl.align_entity.min_range_len", 0),
             "align_entity.min_init_len"     : self.view.settings().get("vhdl.align_entity.min_init_len" , 0),
+            "align_decl.max_qual_len"       : self.view.settings().get("vhdl.align_decl.max_qual_len"   , 40),
+            "align_decl.max_name_len"       : self.view.settings().get("vhdl.align_decl.max_name_len"   , 40),
+            "align_decl.max_type_len"       : self.view.settings().get("vhdl.align_decl.max_type_len"   , 40),
+            "align_decl.max_range_len"      : self.view.settings().get("vhdl.align_decl.max_range_len"  , 40),
+            "align_decl.max_init_len"       : self.view.settings().get("vhdl.align_decl.max_init_len"   , 40),
+            "align_inst.max_port_len"       : self.view.settings().get("vhdl.align_inst.max_port_len"   , 40),
+            "align_inst.max_bind_len"       : self.view.settings().get("vhdl.align_inst.max_bind_len"   , 40),
+            "align_entity.max_name_len"     : self.view.settings().get("vhdl.align_entity.max_name_len" , 40),
+            "align_entity.max_type_len"     : self.view.settings().get("vhdl.align_entity.max_type_len" , 40),
+            "align_entity.max_range_len"    : self.view.settings().get("vhdl.align_entity.max_range_len", 40),
+            "align_entity.max_init_len"     : self.view.settings().get("vhdl.align_entity.max_init_len" , 40),
         }
         # Save information of selected text
         region = self.view.sel()[0]
@@ -161,6 +172,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
                 (?P<range>\(.+?\))?
                 (?:[\ \t]*:=[\ \t]*(?P<init>.*?))?
                 [\ \t]*(?P<end>;)?[\ \t]*(?:--[\ \t]*(?P<comment>[^\n]*))?$'''
+
             decl = re.findall(re_params, params ,flags=re.MULTILINE)
             name_len_l  = [] if not decl else [len(x[0].strip()) for x in decl]
             type_len_l  = [] if not decl else [len(x[1].strip()) for x in decl]
@@ -181,6 +193,11 @@ class VhdlAlign(sublime_plugin.TextCommand):
             type_len  = max(type_len , self.cfg["align_entity.min_type_len" ])
             range_len = max(range_len, self.cfg["align_entity.min_range_len"])
             init_len  = max(init_len , self.cfg["align_entity.min_init_len" ])
+            
+            name_len  = min(name_len , self.cfg["align_entity.max_name_len" ])
+            type_len  = min(type_len , self.cfg["align_entity.max_type_len" ])
+            range_len = min(range_len, self.cfg["align_entity.max_range_len"])
+            init_len  = min(init_len , self.cfg["align_entity.max_init_len" ])
             
             #print(decl)
             #print('Length params: N={} T={} R={} I={}'.format(name_len,type_len,range_len,init_len))
@@ -241,7 +258,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
             dir_len   = 0 if not dir_len_l    else max(dir_len_l  )
             type_len  = 0 if not type_len_l   else max(type_len_l )
             range_len = 0 if not range_len_l  else max(range_len_l)
-            init_len  = 0 if not init_len_l   else max(init_len_l )+4
+            init_len  = 0 if not init_len_l   else max(init_len_l )
             if init_len>0:
                 init_len += 4
             all_range = [x[3] for x in decl if 'range' in x[3]]
@@ -254,8 +271,9 @@ class VhdlAlign(sublime_plugin.TextCommand):
             range_len = max(range_len, self.cfg["align_entity.min_range_len"])
             init_len  = max(init_len , self.cfg["align_entity.min_init_len" ])
 
-            comment_pos = name_len + type_len + range_len + init_len + dir_len+6
-            #print('Length ports: N={} D={} T={} R={} => {}'.format(name_len,dir_len,type_len,range_len,comment_pos))
+            # comment_pos = name_len + type_len + range_len + init_len + dir_len+6
+            comment_pos = name_len + type_len + range_len + init_len + dir_len
+            # print('Length ports: Nane={} Dir={} Type={} Range={} Init={} => {}'.format(name_len,dir_len,type_len,range_len,init_len,comment_pos))
 
             # Add params with alignement and copy non params line as is
             txt_new += '{}port (\n'.format('\t'*(ilvl+1))
@@ -331,28 +349,55 @@ class VhdlAlign(sublime_plugin.TextCommand):
 
     def alignInstanceBinding(self,txt,ilvl):
         # ensure one bind per line
-        txt = re.sub(r',[ \t]*(\w+)',r',\n\1',txt.strip())
-        re_bind = r'^\s*(?P<port>\w+(?:\s*\(./?\))?)\s*=>(?P<bind>.*?)(?P<sep>,?)\s*(?P<comment>[ \t]*--.*)?$'
-        bind = re.findall(re_bind,txt,flags=re.MULTILINE)
-        ports = [len(x[0].strip()) for x in bind]
-        port_len = 0 if not ports else max(ports)
-        binds = [len(x[1].strip()) for x in bind]
-        bind_len = 0 if not binds else max(binds)
+        # JAL: This screws up valid instance bindings with a comma on the RHS, so take it out.
+        #      Instead, recommend checking for multiple '=>' tokens and skipping the line if 
+        #      deemed invalid (this is not implemented!).
+        # txt = re.sub(r',[ \t]*(\w+)',r',\n\1',txt.strip())
+
+        txt = txt.strip()
         
-        port_len = max(port_len, self.cfg["align_inst.min_port_len"])
-        bind_len = max(bind_len, self.cfg["align_inst.min_bind_len"])
+        # re_bind = r'^\s*(?P<port>\w+(?:\s*\(./?\))?)\s*=>(?P<bind>.*?)(?P<sep>,?)\s*(?P<comment>[ \t]*--.*)?$'
+        re_bind = r'''
+            (?six)
+            ^
+            \s*
+            (?P<port>\w+(\(.+?\))?)
+            \s*=>\s*
+            (?P<bind>\S*?\s*?(\(.+?\))?)\s*
+            (?P<sep>,)?\s*
+            (?P<comment>\s*--.*)?
+            $
+        '''
+
+        port_len = self.cfg["align_inst.min_port_len"]
+        bind_len = self.cfg["align_inst.min_bind_len"]
+
+        for l in txt.splitlines() :
+            m = re.match(re_bind,l)
+            if m :
+                port_len = max(port_len, len(m.group('port')))
+                bind_len = max(bind_len, len(m.group('bind')))
+
+        port_len = min(port_len, self.cfg["align_inst.max_port_len"])
+        bind_len = min(bind_len, self.cfg["align_inst.max_bind_len"])
         
-        # print('[alignInstanceBinding] : Max length port = {} , bind = {}'.format(max(port_len),max(bind_len)))
+        # print('[alignInstanceBinding] : Max length port = {} , bind = {}'.format(port_len,bind_len))
         txt_new = ''
         for l in txt.splitlines() :
             # check if match binding
             m = re.match(re_bind,l)
+
             # Add indent level
             txt_new += '\t'*ilvl
             # in case of binding align port and signal together
             if m :
+                # print("Matched line: " + l)
+                # print("  port: '" + m.group('port') + "'")
+                # print("  bind: '" + m.group('bind') + "'")
+                # print("  sep: '" + m.group('sep') + "'")
+                # print("  comment: '" + m.group('comment') + "'")
                 txt_new += m.group('port').strip().ljust(port_len)
-                txt_new += ' => '
+                txt_new += '\t=> '
                 txt_new += m.group('bind').strip().ljust(bind_len)
                 if m.group('sep'):
                     txt_new += ','
@@ -362,8 +407,10 @@ class VhdlAlign(sublime_plugin.TextCommand):
                     txt_new += ' ' + m.group('comment').strip()
             # No Binding ? copy line with indent level
             else :
+                # print("No match: " + l.strip())
                 txt_new += l.strip()
             txt_new += '\n'
+
         return txt_new
 
     def alignRecord(self,txt,ilvl):
@@ -413,12 +460,12 @@ class VhdlAlign(sublime_plugin.TextCommand):
 
     def alignDecl(self,txt,ilvl):
         re_decl = r'''
-        	(?six)^[\ \t]*
+            (?six)^[\ \t]*
             (?P<qual>\w+)[\ \t]*(?P<name>'''+self.s_id_list+r''')[\ \t]*:[\ \t]*
             (?P<type>\w+)[\ \t]*
             (?P<range>\(.+?\))?
             (?P<init>[\ \t]*\:=[\ \t]*(?P<init_val>[^;]+?))?
-            [\ \t]*;[\ \t]*(?:--(?P<comment>[^\n]*))?$    	
+            [\ \t]*;[\ \t]*(?:--(?P<comment>[^\n]*))?$      
         '''
 
         decl = re.findall(re_decl, txt ,flags=re.MULTILINE)
@@ -507,7 +554,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
         re_attribute = r'''
                 (?six)
                 (?P<keyword>
-                    'length|'range|'high|'low
+                    'ascending|'base|'delayed|'driving|'driving_value|'event|'high|'image|'instance_name|'last_active|'last_event|'last_value|'left|'leftof|'length|'low|'path_name|'pos|'pred|'quiet|'range|'reverse_range|'right|'rightof|'simple_name|'stable|'succ|'transaction|'val|'value
                 )
                 (?=[^a-z0-9_])
             '''
