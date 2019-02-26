@@ -535,7 +535,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
                 (?six)
                 (?<=[^a-z0-9_'])
                 (?P<keyword>
-                    signal|port|generic|map|downto|to|range|in|out|entity|architecture|type|subtype|is|array|of
+					access|after|alias|all|and|architecture|array|assert|attribute|begin|block|body|buffer|bus|case|component|configuration|constant|disconnect|downto|else|elsif|end|entity|exit|ext|file|for|function|generate|generic|group|guarded|if|impure|in|inertial|inout|is|label|library|linkage|literal|loop|map|null|of|on|open|others|out|package|port|postponed|procedure|process|pure|range|record|register|reject|report|resolved|return|select|severity|shared|signal|subtype|then|to|transport|type|unaffected|units|until|use|variable|wait|when|while|with
                 )
                 (?=[^a-z0-9_])
             '''
@@ -545,7 +545,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
                 (?six)
                 (?<=[^a-z0-9_'])
                 (?P<keyword>
-                    std_logic|std_logic_vector|bit|bit_vector|unsigned|signed|natural|shift_left|resize
+                    abs|conv_integer|conv_signed|conv_std_logic_vector|conv_unsigned|falling_edge|integer|is_x|mod|nand|natural|new|next|nor|not|or|rem|rising_edge|rol|ror|shl|shr|signed|sla|sll|sra|srl|std_logic|std_logic_vector|std_ulogic|std_ulogic_vector|sxt|to_bit|to_bitvector|to_stdlogicvector|to_stdulogic|to_stdulogicvector|to_ux01|to_x01|to_x01z|unsigned|ux01|ux01z|x01|x01z|xnor|xor
                 )
                 (?=[^a-z0-9_])
             '''
@@ -554,7 +554,7 @@ class VhdlAlign(sublime_plugin.TextCommand):
         re_attribute = r'''
                 (?six)
                 (?P<keyword>
-                    'ascending|'base|'delayed|'driving|'driving_value|'event|'high|'image|'instance_name|'last_active|'last_event|'last_value|'left|'leftof|'length|'low|'path_name|'pos|'pred|'quiet|'range|'reverse_range|'right|'rightof|'simple_name|'stable|'succ|'transaction|'val|'value
+					'ascending|'base|'delayed|'driving|'driving_value|'event|'high|'image|'instance_name|'last_active|'last_event|'last_value|'left|'leftof|'length|'low|'path_name|'pos|'pred|'quiet|'range|'reverse_range|'right|'rightof|'simple_name|'stable|'succ|'transaction|'val|'value
                 )
                 (?=[^a-z0-9_])
             '''
