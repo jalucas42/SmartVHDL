@@ -1,0 +1,6 @@
+<snippet>
+  <tabTrigger></tabTrigger>
+  <scope>source.vhdl</scope>
+  <content><![CDATA[SIGNED(${1:$SELECTION})]]></content>
+  <description>Wrap with SIGNED()</description>
+</snippet>

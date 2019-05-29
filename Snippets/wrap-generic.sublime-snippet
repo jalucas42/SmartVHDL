@@ -1,0 +1,6 @@
+<snippet>
+  <tabTrigger></tabTrigger>
+  <scope>source.vhdl</scope>
+  <content><![CDATA[${2:XXX}(${1:$SELECTION}, $3)]]></content>
+  <description>Wrap with generic function</description>
+</snippet>

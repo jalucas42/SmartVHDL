@@ -1,0 +1,6 @@
+<snippet>
+  <tabTrigger></tabTrigger>
+  <scope>source.vhdl</scope>
+  <content><![CDATA[TO_SIGNED(${1:$SELECTION}, ${2:'length})]]></content>
+  <description>Wrap with TO_SIGNED()</description>
+</snippet>

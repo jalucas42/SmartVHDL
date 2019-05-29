@@ -1,0 +1,6 @@
+<snippet>
+  <tabTrigger></tabTrigger>
+  <scope>source.vhdl</scope>
+  <content><![CDATA[STD_LOGIC_VECTOR(${1:$SELECTION})]]></content>
+  <description>Wrap with STD_LOGIC_VECTOR()</description>
+</snippet>

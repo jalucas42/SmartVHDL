@@ -1,0 +1,14 @@
+[
+    {
+        "caption": "SmartVHDL",
+        "command": "proxy", "args": { "command_name": "", "scope_selector": "source.vhdl", },
+        "children": [
+            { "caption": "Wrap - STD_LOGIC_VECTOR()" , "command": "proxy" , "args": { "command_name": "insert_snippet" , "name": "Packages/SmartVHDL/Snippets/wrap-std_logic_vector.sublime-snippet" , "scope_selector": "source.vhdl" , } , } ,
+            { "caption": "Wrap - UNSIGNED()"         , "command": "proxy" , "args": { "command_name": "insert_snippet" , "name": "Packages/SmartVHDL/Snippets/wrap-unsigned.sublime-snippet"         , "scope_selector": "source.vhdl" , } , } ,
+            { "caption": "Wrap - SIGNED()"           , "command": "proxy" , "args": { "command_name": "insert_snippet" , "name": "Packages/SmartVHDL/Snippets/wrap-signed.sublime-snippet"           , "scope_selector": "source.vhdl" , } , } ,
+            { "caption": "Wrap - TO_UNSIGNED()"      , "command": "proxy" , "args": { "command_name": "insert_snippet" , "name": "Packages/SmartVHDL/Snippets/wrap-to_unsigned.sublime-snippet"      , "scope_selector": "source.vhdl" , } , } ,
+            { "caption": "Wrap - TO_SIGNED()"        , "command": "proxy" , "args": { "command_name": "insert_snippet" , "name": "Packages/SmartVHDL/Snippets/wrap-to_signed.sublime-snippet"        , "scope_selector": "source.vhdl" , } , } ,
+            { "caption": "Wrap - generic function"   , "command": "proxy" , "args": { "command_name": "insert_snippet" , "name": "Packages/SmartVHDL/Snippets/wrap-generic.sublime-snippet"          , "scope_selector": "source.vhdl" , } , } ,
+        ]
+    },
+]
