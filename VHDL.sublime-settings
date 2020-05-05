@@ -38,4 +38,8 @@
   "vhdl.align_entity.min_type_len"      : 0,
   "vhdl.align_entity.min_range_len"     : 0,
   "vhdl.align_entity.min_init_len"      : 0,
+
+	"alignment_chars"       : ["=", ],
+	"alignment_space_chars" : ["=", ],
+
 }
